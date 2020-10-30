@@ -5,3 +5,16 @@ body {
 video {
   display: none;
 }
+
+canvas {
+  border: 1px solid red;
+}
+
+.canvas-container {
+  position: relative;
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}

@@ -1,7 +1,8 @@
 import * as handTrack from 'handtrackjs';
-import config from './config';
-import modelParams from './config';
-import handleHands from './../audio/handleHands';
+import config from '../config';
+import modelParams from '../config';
+import paintHands from './paintHands';
+import handleHandsAudio from './../audio/handleHands';
 
 const video = document.querySelector('video');
 const canvas = document.querySelector('canvas');
@@ -10,6 +11,8 @@ const context = canvas.getContext('2d');
 // output visible
 const cvis = document.querySelector('#cvis');
 const ctxvis = cvis.getContext('2d');
+
+// Initialises handtracking and passes data do handleHnads
 
 export default function initialise() {
   let model;
@@ -50,18 +53,16 @@ export default function initialise() {
   function runDetection() {
     model.detect(video).then((predictions) => {
       if (predictions.length > 0) {
-        console.log(predictions);
+        // console.log(predictions);
         handleDetection(predictions, canvas, context, video);
       }
 
-      context.fillStyle = 'rgba(0,0,0,0.2)';
-      context.fillRect(0, 0, config.canvas.width, config.canvas.height);
       requestAnimationFrame(runDetection);
     });
   }
 
   function handleDetection(predictions, canvas, context, video) {
-    model.renderPredictions(predictions, cvis, ctxvis, video);
+    // model.renderPredictions(predictions, cvis, ctxvis, video);
     let bboxs = predictions.map((hand) => hand.bbox);
 
     // ---------------handle canvas output
@@ -70,40 +71,31 @@ export default function initialise() {
     bboxs.forEach((box, i) => {
       let centerPoint = [box[0] + box[2] / 2, box[1] + box[3] / 2];
       let centerPointCanvas = scalePoint(centerPoint);
-      context.fillStyle = i == 0 ? 'blue' : 'red';
-      context.fillRect(centerPointCanvas[0], centerPointCanvas[1], 5, 5);
+
       i == 0 ? (c1 = centerPointCanvas) : (c2 = centerPointCanvas);
     });
 
-    if (c1 && c2) {
-      context.strokeStyle = 'rgb(255,255,255)';
-      context.beginPath();
-      context.moveTo(c1[0], c1[1]);
-      context.lineTo(c2[0], c2[1]);
-      context.stroke();
-    }
+    // -----------------render user hands and line between them on canvas
+    paintHands([c1, c2], context);
 
-    // -----------------handle audio output
+    // -----------------handle audio output (including audio overlay)
 
-    handleHands([c1, c2], {
-      width: config.canvas.width,
-      height: config.canvas.height,
-    });
+    handleHandsAudio([c1, c2]);
   }
 
   handTrack.load(modelParams).then((lmodel) => {
     model = lmodel;
   });
 
-  // Handle window resizing
-  resizeHandler();
-  window.addEventListener('resize', resizeHandler);
+  // // Handle window resizing
+  // resizeHandler();
+  // window.addEventListener('resize', resizeHandler);
 
-  function resizeHandler() {
-    config.canvas.width = canvas.width = window.innerWidth * 0.6;
-    config.canvas.height = canvas.height =
-      window.innerWidth * 0.6 * (320 / 480);
-  }
+  // function resizeHandler() {
+  //   config.canvas.width = canvas.width = window.innerWidth * 0.6;
+  //   config.canvas.height = canvas.height =
+  //     window.innerWidth * 0.6 * (320 / 480);
+  // }
 }
 
 ///
